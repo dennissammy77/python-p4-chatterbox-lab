@@ -14,9 +14,45 @@ migrate = Migrate(app, db)
 
 db.init_app(app)
 
-@app.route('/messages')
+@app.route('/')
+def index():
+    return make_response("Welcome to chatterbox",200)
+
+@app.route('/messages', methods=['GET', 'POST'])
 def messages():
-    return ''
+    if request.method == 'GET':
+        messages = Message.query.all()
+        return make_response([message.to_dict() for message in messages], 200)
+    elif request.method == 'POST':
+        data=request.get_json()
+        new_message = Message(
+           body=data["body"],
+           username=data["username"],
+        )
+        db.session.add(new_message)
+        db.session.commit(new_message)
+
+        return make_response(new_message.to_dict(), 201)
+
+# PATCH /messages/<int:id>
+@app.route('/messages/<int:id>', methods=['PATCH'])
+def update_message(id):
+    msg = Message.query.get_or_404(id)
+    data = request.get_json()
+    if not data or 'body' not in data:
+        return jsonify({"error": "body required"}), 400
+
+    msg.body = data['body']
+    db.session.commit()
+    return jsonify(msg.to_dict())
+
+# DELETE /messages/<int:id>
+@app.route('/messages/<int:id>', methods=['DELETE'])
+def delete_message(id):
+    msg = Message.query.get_or_404(id)
+    db.session.delete(msg)
+    db.session.commit()
+    return jsonify({"message": "Message deleted successfully."}), 200
 
 @app.route('/messages/<int:id>')
 def messages_by_id(id):
