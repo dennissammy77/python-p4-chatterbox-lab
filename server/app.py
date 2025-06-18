@@ -13,6 +13,7 @@ CORS(app)
 migrate = Migrate(app, db)
 
 db.init_app(app)
+app.json.compact=False
 
 @app.route('/')
 def index():
@@ -30,9 +31,9 @@ def messages():
            username=data["username"],
         )
         db.session.add(new_message)
-        db.session.commit(new_message)
+        db.session.commit()
 
-        return make_response(new_message.to_dict(), 201)
+        return jsonify(new_message.to_dict()), 201
 
 # PATCH /messages/<int:id>
 @app.route('/messages/<int:id>', methods=['PATCH'])
